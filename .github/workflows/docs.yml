@@ -1,0 +1,58 @@
+name: docs
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  docs:
+    name: docs
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          # https://github.com/nodejs/node/issues/49497
+          node-version: '20.5.1'
+
+      - name: Build Packages
+        run: |
+          yarn
+          yarn build
+          yarn workspace @chronocat/docs build
+        shell: bash
+
+      - name: Publish to Vercel
+        if: github.ref == 'refs/heads/master'
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          personal_token: ${{ secrets.DEPLOY_TOKEN }}
+          user_name: 'Il Harper'
+          user_email: 'hi@ilharper.com'
+          external_repository: ilharp/chronocat-deploy
+          publish_branch: master
+          publish_dir: packages/docs/build
+          enable_jekyll: true # Not to create .nojekyll since this is not a gh page
+          commit_message: 'chore: publish ${{ github.sha }}'
+
+      - name: Publish to GitHub Pages
+        if: github.ref == 'refs/heads/master'
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          personal_token: ${{ secrets.DEPLOY_TOKEN }}
+          user_name: 'Il Harper'
+          user_email: 'hi@ilharper.com'
+          external_repository: chrononeko/chrononeko.github.io
+          publish_branch: master
+          publish_dir: packages/docs/build
+          enable_jekyll: true # Not to create .nojekyll since this is not a gh page
+          commit_message: 'chore: publish ${{ github.sha }}'
